@@ -3,6 +3,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,9 +35,21 @@ func Load() error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	// TODO: Add any additional config files, then make sure to
-	// invoke viper.ReadInConfig() to read-in their values
-
+	// Set the default config file
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// TODO: Should we error here, or log a warning and continue? UserHomeDir()
+		// checks environment variables
+		return fmt.Errorf("could not determine the home directory: %v", homeDir)
+	}
+	viper.SetConfigName("wash")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(filepath.Join(homeDir, ".puppetlabs", "wash"))
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return err
+		}
+	}
 	// Load the shared config
 	Socket = viper.GetString(SocketKey)
 
