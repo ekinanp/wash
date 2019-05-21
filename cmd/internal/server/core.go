@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/Benchkram/errz"
 	"github.com/puppetlabs/wash/activity"
 	"github.com/puppetlabs/wash/api"
@@ -20,13 +18,15 @@ import (
 	"github.com/puppetlabs/wash/plugin/docker"
 	"github.com/puppetlabs/wash/plugin/kubernetes"
 
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
+
 	log "github.com/sirupsen/logrus"
 )
 
 // Opts exposes additional configuration for server operation.
 type Opts struct {
 	CPUProfilePath      string
-	ExternalPluginsPath string
 	LogFile             string
 	// LogLevel can be "warn", "info", "debug", or "trace".
 	LogLevel string
@@ -82,8 +82,8 @@ func (s *Server) Start() error {
 
 	registry := plugin.NewRegistry()
 	loadInternalPlugins(registry)
-	if s.opts.ExternalPluginsPath != "" {
-		loadExternalPlugins(registry, s.opts.ExternalPluginsPath)
+	if externalPluginsRaw := viper.Get("external_plugins"); externalPluginsRaw != nil {
+		loadExternalPlugins(registry, externalPluginsRaw)
 	}
 	if len(registry.Plugins()) == 0 {
 		return fmt.Errorf("No plugins loaded")
@@ -184,31 +184,23 @@ func loadInternalPlugins(registry *plugin.Registry) {
 	log.Debug("Finished loading internal plugins")
 }
 
-func loadExternalPlugins(registry *plugin.Registry, externalPluginsPath string) {
+func loadExternalPlugins(registry *plugin.Registry, externalPluginsRaw interface{}) {
 	logError := func(err error) {
-		log.Warnf("Failed to load external plugins: %v\n", err)
+		log.Warnf("Failed to load external plugins: %v. Raw external plugin config: %v\n", err, externalPluginsRaw)
 	}
 
 	log.Infof("Loading external plugins")
-
-	externalPluginsFH, err := os.Open(externalPluginsPath)
+	externalPluginsYAML, err := yaml.Marshal(externalPluginsRaw)
 	if err != nil {
-		logError(err)
+		// We should never hit this code-path
+		logError(fmt.Errorf("could not encode the raw external plugin config to YAML: %v", err))
 		return
 	}
-	defer func() {
-		if err := externalPluginsFH.Close(); err != nil {
-			log.Infof("Error closing %v: %+v", externalPluginsPath, err)
-		}
-	}()
-
-	d := yaml.NewDecoder(externalPluginsFH)
 	var externalPlugins []plugin.ExternalPluginSpec
-	if err := d.Decode(&externalPlugins); err != nil {
+	if err := yaml.Unmarshal(externalPluginsYAML, &externalPlugins); err != nil {
 		logError(err)
 		return
 	}
-
 	for _, p := range externalPlugins {
 		log.Infof("Loading %v", p.Script)
 		if err := registry.RegisterExternalPlugin(p); err != nil {
@@ -216,6 +208,5 @@ func loadExternalPlugins(registry *plugin.Registry, externalPluginsPath string) 
 			log.Warnf("%v failed to load: %+v", p.Script, err)
 		}
 	}
-
 	log.Infof("Finished loading external plugins")
 }

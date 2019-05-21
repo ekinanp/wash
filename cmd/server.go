@@ -62,7 +62,6 @@ func serverMain(cmd *cobra.Command, args []string) exitCode {
 func addServerArgs(cmd *cobra.Command) {
 	cmd.Flags().String("loglevel", "info", "Set the logging level")
 	cmd.Flags().String("logfile", "", "Set the log file's location. Defaults to stdout")
-	cmd.Flags().String("external-plugins", "", "Specify the file to load any external plugins")
 	cmd.Flags().String("cpuprofile", "", "Write cpu profile to file")
 }
 
@@ -70,7 +69,6 @@ func bindServerArgs(cmd *cobra.Command, args []string) {
 	// Only bind config lookup when invoking the specific command as viper bindings are global.
 	errz.Fatal(viper.BindPFlag("loglevel", cmd.Flags().Lookup("loglevel")))
 	errz.Fatal(viper.BindPFlag("logfile", cmd.Flags().Lookup("logfile")))
-	errz.Fatal(viper.BindPFlag("external-plugins", cmd.Flags().Lookup("external-plugins")))
 	errz.Fatal(viper.BindPFlag("cpuprofile", cmd.Flags().Lookup("cpuprofile")))
 }
 
@@ -78,7 +76,6 @@ func bindServerArgs(cmd *cobra.Command, args []string) {
 func serverOptsFromFlags() server.Opts {
 	return server.Opts{
 		CPUProfilePath:      viper.GetString("cpuprofile"),
-		ExternalPluginsPath: viper.GetString("external-plugins"),
 		LogFile:             viper.GetString("logfile"),
 		LogLevel:            viper.GetString("loglevel"),
 	}
