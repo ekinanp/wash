@@ -72,7 +72,7 @@ func (suite *EntrySchemaTestSuite) TestPrune_Complex() {
 func (suite *EntrySchemaTestSuite) TestPrune_RealWorld_AWS() {
 	s := suite.readFixture("real_world_aws")
 	p := func(s *EntrySchema) bool {
-		for _, action := range s.Actions {
+		for _, action := range s.Actions() {
 			if action == "exec" {
 				return true
 			}
@@ -81,12 +81,12 @@ func (suite *EntrySchemaTestSuite) TestPrune_RealWorld_AWS() {
 	}
 	s = Prune(s, p)
 	expected := map[string][]string{
-		"aws.Root": []string{"aws.profile"},
-		"aws.profile": []string{"aws.resourcesDir"},
-		"aws.resourcesDir":  []string{"aws.ec2Dir"},
-		"aws.ec2Dir": []string{"aws.ec2InstancesDir"},
+		"aws.Root":            []string{"aws.profile"},
+		"aws.profile":         []string{"aws.resourcesDir"},
+		"aws.resourcesDir":    []string{"aws.ec2Dir"},
+		"aws.ec2Dir":          []string{"aws.ec2InstancesDir"},
 		"aws.ec2InstancesDir": []string{"aws.ec2Instance"},
-		"aws.ec2Instance": []string{},
+		"aws.ec2Instance":     []string{},
 	}
 	suite.Equal(expected, s.toMap())
 }
@@ -180,7 +180,7 @@ func (suite *EntrySchemaTestSuite) readFixture(name string) *EntrySchema {
 func (suite *EntrySchemaTestSuite) makeSchemaP(trueValues ...string) EntrySchemaPredicate {
 	return func(s *EntrySchema) bool {
 		for _, typeID := range trueValues {
-			if s.TypeID == typeID {
+			if s.TypeID() == typeID {
 				return true
 			}
 		}

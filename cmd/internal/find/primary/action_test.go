@@ -3,7 +3,7 @@ package primary
 import (
 	"testing"
 
-	"github.com/puppetlabs/wash/api/types"
+	apitypes "github.com/puppetlabs/wash/api/types"
 	"github.com/puppetlabs/wash/cmd/internal/find/types"
 	"github.com/stretchr/testify/suite"
 )
