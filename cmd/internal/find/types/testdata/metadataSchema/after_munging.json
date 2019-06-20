@@ -1,0 +1,62 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "properties": {
+        "AP": {},
+        "BP": {},
+        "CP": {
+            "items": {},
+            "type": "array"
+        },
+        "DP": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/schema::Dp"
+        },
+        "EP": {
+            "items": {
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "$ref": "#/definitions/__anonStruct__0"
+            },
+            "type": "array"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "definitions": {
+        "__anonStruct__0": {
+            "properties": {
+                "EAP": {},
+                "EBP": {}
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "__anonStruct__1": {
+            "properties": {
+                "EAP": {},
+                "EBP": {}
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "schema::Dp": {
+            "properties": {
+                "DAP": {},
+                "DBP": {},
+                "DCP": {
+                    "$schema": "http://json-schema.org/draft-04/schema#",
+                    "$ref": "#/definitions/schema::Dp::DCp"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "schema::Dp::DCp": {
+            "properties": {
+                "DCAP": {},
+                "DCBp": {}
+            },
+            "additionalProperties": false,
+            "type": "object"
+        }
+    }
+}
