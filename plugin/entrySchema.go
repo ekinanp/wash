@@ -5,15 +5,19 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/ekinanp/jsonschema"
 )
 
 type entrySchema struct {
-	TypeID    string         `json:"type_id"`
-	Label     string         `json:"label"`
-	Singleton bool           `json:"singleton"`
-	Actions   []string       `json:"actions"`
-	Children  []*EntrySchema `json:"children"`
-	entry     Entry
+	TypeID              string         `json:"type_id"`
+	Label               string         `json:"label"`
+	Singleton           bool           `json:"singleton"`
+	Actions             []string       `json:"actions"`
+	MetaAttributeSchema *JSONSchema    `json:"meta_attribute_schema"`
+	MetadataSchema      *JSONSchema    `json:"metadata_schema"`
+	Children            []*EntrySchema `json:"children"`
+	entry               Entry
 }
 
 // EntrySchema represents an entry's schema. Use plugin.NewEntrySchema
@@ -159,6 +163,32 @@ func (s *EntrySchema) SetActions(actions []string) *EntrySchema {
 	return s
 }
 
+// SetMetaAttributeSchema sets the meta attribute's schema. obj is an empty struct
+// that will be marshalled into a JSON schema. SetMetaSchema will panic
+// if obj is not a struct.
+func (s *EntrySchema) SetMetaAttributeSchema(obj interface{}) *EntrySchema {
+	schema, err := s.schemaOf(obj)
+	if err != nil {
+		panic(fmt.Sprintf("s.SetMetaAttributeSchema: %v", err))
+	}
+	s.entrySchema.MetaAttributeSchema = schema
+	return s
+}
+
+// SetMetadataSchema sets Entry#Metadata's schema. obj is an empty struct that will be
+// marshalled into a JSON schema. SetMetadataSchema will panic if obj is not a struct.
+//
+// NOTE: Only use SetMetadataSchema if you're overriding Entry#Metadata. Otherwise, use
+// SetMetaAttributeSchema.
+func (s *EntrySchema) SetMetadataSchema(obj interface{}) *EntrySchema {
+	schema, err := s.schemaOf(obj)
+	if err != nil {
+		panic(fmt.Sprintf("s.SetMetadataSchema: %v", err))
+	}
+	s.entrySchema.MetadataSchema = schema
+	return s
+}
+
 // Children returns the entry's child schemas
 func (s *EntrySchema) Children() []*EntrySchema {
 	return s.entrySchema.Children
@@ -204,4 +234,25 @@ func (s *EntrySchema) fillChildren(visited map[string]bool) {
 	// Delete "s" from visited so that siblings or ancestors that
 	// also use "s" won't be affected.
 	delete(visited, s.TypeID())
+}
+
+// Helper that wraps the common code shared by the SetMeta*Schema methods
+func (s *EntrySchema) schemaOf(obj interface{}) (*JSONSchema, error) {
+	typeMappings := make(map[reflect.Type]*jsonschema.Type)
+	for t, s := range s.entry.wrappedTypes() {
+		typeMappings[reflect.TypeOf(t)] = s.Type
+	}
+	r := jsonschema.Reflector{
+		// Setting this option ensures that the schema's root is obj's
+		// schema instead of a reference to a definition containing obj's
+		// schema. This way, we can validate that "obj" is a JSON object's
+		// schema. Otherwise, the check below will always fail.
+		ExpandedStruct: true,
+		TypeMappings:   typeMappings,
+	}
+	schema := r.Reflect(obj)
+	if schema.Type.Type != "object" {
+		return nil, fmt.Errorf("expected a JSON object but got %v", schema.Type.Type)
+	}
+	return schema, nil
 }
