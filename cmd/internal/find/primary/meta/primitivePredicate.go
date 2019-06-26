@@ -20,10 +20,10 @@ func parsePrimitivePredicate(tokens []string) (predicate.Predicate, []string, er
 	switch token := tokens[0]; token {
 	case "-null":
 		// NullPredicate
-		return genericPredicate(nullP), tokens[1:], nil
+		return genericP(nullP), tokens[1:], nil
 	case "-exists":
 		// ExistsPredicate
-		return genericPredicate(existsP), tokens[1:], nil
+		return genericP(existsP), tokens[1:], nil
 	case "-true":
 		// BooleanPredicate
 		return trueP, tokens[1:], nil
@@ -82,13 +82,13 @@ var falseP = booleanP(false)
 
 func booleanP(value bool) predicate.Predicate {
 	return &booleanPredicate{
-		genericPredicate: func(v interface{}) bool {
+		genericPredicate: genericP(func(v interface{}) bool {
 			bv, ok := v.(bool)
 			if !ok {
 				return false
 			}
 			return bv == value
-		},
+		}),
 		value: value,
 	}
 }

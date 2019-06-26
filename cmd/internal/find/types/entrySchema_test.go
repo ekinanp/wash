@@ -81,12 +81,12 @@ func (suite *EntrySchemaTestSuite) TestPrune_RealWorld_AWS() {
 	}
 	s = Prune(s, p)
 	expected := map[string][]string{
-		"aws.Root": []string{"aws.profile"},
-		"aws.profile": []string{"aws.resourcesDir"},
-		"aws.resourcesDir":  []string{"aws.ec2Dir"},
-		"aws.ec2Dir": []string{"aws.ec2InstancesDir"},
+		"aws.Root":            []string{"aws.profile"},
+		"aws.profile":         []string{"aws.resourcesDir"},
+		"aws.resourcesDir":    []string{"aws.ec2Dir"},
+		"aws.ec2Dir":          []string{"aws.ec2InstancesDir"},
 		"aws.ec2InstancesDir": []string{"aws.ec2Instance"},
-		"aws.ec2Instance": []string{},
+		"aws.ec2Instance":     []string{},
 	}
 	suite.Equal(expected, s.toMap())
 }

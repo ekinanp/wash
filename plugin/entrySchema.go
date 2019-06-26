@@ -82,6 +82,8 @@ func NewEntrySchema(e Entry, label string) *EntrySchema {
 			// its child schemas.
 			entry: e,
 		},
+		// The meta attribute's empty by default
+		metaAttributeSchemaObj: struct{}{},
 	}
 	s.SetLabel(label)
 	return s
@@ -279,6 +281,7 @@ func (s *EntrySchema) schemaOf(obj interface{}) (*JSONSchema, error) {
 		typeMappings[reflect.TypeOf(t)] = s.Type
 	}
 	r := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
 		// Setting this option ensures that the schema's root is obj's
 		// schema instead of a reference to a definition containing obj's
 		// schema. This way, we can validate that "obj" is a JSON object's

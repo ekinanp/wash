@@ -13,7 +13,25 @@ func Parse(tokens []string) (*types.EntryPredicate, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return types.ToEntryP(func(e types.Entry) bool {
+	entryP := types.ToEntryP(func(e types.Entry) bool {
 		return p.IsSatisfiedBy(e.Metadata)
-	}), tokens, nil
+	})
+	entryP.SchemaP = func(s *types.EntrySchema) bool {
+		if s.MetadataSchema == nil {
+			// The entry doesn't have a metadata schema, so
+			// return true for now.
+			//
+			// TODO: Should we require metadata schemas? They can
+			// be cumbersome to add for dynamic languages like
+			// Ruby/Python
+			//
+			// TODO: Fix plugin.JSONSchema to default to an "empty"
+			// object's schema if an entry doesn't have a metadata
+			// schema. This makes serialization/de-serialization
+			// easier.
+			return true
+		}
+		return p.(Predicate).schemaP().IsSatisfiedBy(newSchema(s.MetadataSchema))
+	}
+	return entryP, tokens, nil
 }

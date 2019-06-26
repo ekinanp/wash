@@ -15,7 +15,7 @@ func parseEmptyPredicate(tokens []string) (predicate.Predicate, []string, error)
 
 func emptyP(negated bool) predicate.Predicate {
 	return &emptyPredicate{
-		genericPredicate: func(v interface{}) bool {
+		genericPredicate: genericP(func(v interface{}) bool {
 			switch t := v.(type) {
 			case map[string]interface{}:
 				if negated {
@@ -29,8 +29,8 @@ func emptyP(negated bool) predicate.Predicate {
 				return len(t) == 0
 			default:
 				return false
-			}	
-		},
+			}
+		}),
 		negated: negated,
 	}
 }
@@ -42,5 +42,33 @@ type emptyPredicate struct {
 
 func (p *emptyPredicate) Negate() predicate.Predicate {
 	return emptyP(!p.negated)
-} 
+}
 
+type emptyPredicateSchemaP struct {
+	*schemaPLeaf
+	P schemaPredicate
+}
+
+func newEmptyPredicateSchemaP() *emptyPredicateSchemaP {
+	esp := &emptyPredicateSchemaP{
+		schemaPLeaf: newSchemaPLeaf(),
+	}
+
+	// An empty predicate's schemaP returns true iff the value's
+	// an array OR an object.
+	objP := newSchemaP()
+	objP.updateKS(func(ks keySequence) keySequence {
+		return ks.EndsWithObject()
+	})
+	arrayP := newSchemaP()
+	arrayP.updateKS(func(ks keySequence) keySequence {
+		return ks.EndsWithArray()
+	})
+	esp.P = objP.Or(arrayP).(schemaPredicate)
+
+	return esp
+}
+
+func (p1 *emptyPredicateSchemaP) IsSatisfiedBy(v interface{}) bool {
+	return p1.P.IsSatisfiedBy(v)
+}

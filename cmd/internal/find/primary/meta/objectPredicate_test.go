@@ -3,13 +3,12 @@ package meta
 import (
 	"testing"
 
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/stretchr/testify/suite"
 )
 
 type ObjectPredicateTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *ObjectPredicateTestSuite) TestKeyRegex() {
@@ -93,7 +92,7 @@ func (s *ObjectPredicateTestSuite) TestObjectP_ExistantKey() {
 	mp["foo"] = "baz"
 
 	var calledP bool
-	p := genericPredicate(func(v interface{}) bool {
+	p := genericP(func(v interface{}) bool {
 		calledP = true
 		s.Equal("baz", v, "objectP did not pass-in mp[key] into p")
 		return true
@@ -102,7 +101,7 @@ func (s *ObjectPredicateTestSuite) TestObjectP_ExistantKey() {
 
 	s.True(objP.IsSatisfiedBy(mp), "objectP did not return p(mp[key])")
 	s.True(calledP, "objectP did not invoke p")
-	
+
 	// Now test negation
 	calledP = false
 	s.False(objP.Negate().IsSatisfiedBy(mp), "objectP.Negate() did not return !p(mp[key])")

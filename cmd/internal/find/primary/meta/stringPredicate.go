@@ -35,13 +35,13 @@ func parseStringPredicate(tokens []string) (predicate.Predicate, []string, error
 
 func stringP(p func(string) bool) predicate.Predicate {
 	return &stringPredicate{
-		genericPredicate: func(v interface{}) bool {
+		genericPredicate: genericP(func(v interface{}) bool {
 			strV, ok := v.(string)
 			if !ok {
 				return false
 			}
 			return p(strV)
-		},
+		}),
 		p: p,
 	}
 }

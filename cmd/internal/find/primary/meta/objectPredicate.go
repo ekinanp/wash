@@ -73,8 +73,8 @@ func parseObjectP(tokens []string, baseCaseParser, keySequenceParser predicate.P
 }
 
 func objectP(key string, p predicate.Predicate) predicate.Predicate {
-	return &objectPredicate{
-		genericPredicate: func(v interface{}) bool {
+	objP := &objectPredicate{
+		genericPredicate: genericP(func(v interface{}) bool {
 			mp, ok := v.(map[string]interface{})
 			if !ok {
 				return false
@@ -85,10 +85,15 @@ func objectP(key string, p predicate.Predicate) predicate.Predicate {
 				return false
 			}
 			return p.IsSatisfiedBy(mp[matchingKey])
-		},
+		}),
 		key: key,
-		p: p,
+		p:   p,
 	}
+	objP.SchemaP = p.(Predicate).schemaP()
+	objP.SchemaP.updateKS(func(ks keySequence) keySequence {
+		return ks.AddObject(key)
+	})
+	return objP
 }
 
 func findMatchingKey(mp map[string]interface{}, key string) string {
@@ -104,9 +109,12 @@ func findMatchingKey(mp map[string]interface{}, key string) string {
 type objectPredicate struct {
 	genericPredicate
 	key string
-	p predicate.Predicate
+	p   predicate.Predicate
 }
 
+// Note that since "! .key sp == .key ! sp" and "sp" is negated
+// with its predicate "objP.p", Negate() still works for schema
+// predicates.
 func (objP *objectPredicate) Negate() predicate.Predicate {
 	return objectP(objP.key, objP.p.Negate())
 }

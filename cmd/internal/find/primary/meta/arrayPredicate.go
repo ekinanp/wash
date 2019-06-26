@@ -119,7 +119,7 @@ func parseArrayPredicateType(token string) (arrayPredicateType, string, error) {
 func arrayP(ptype arrayPredicateType, p predicate.Predicate) predicate.Predicate {
 	arryP := &arrayPredicate{
 		ptype: ptype,
-		p: p,
+		p:     p,
 	}
 	switch ptype.t {
 	case 's':
@@ -155,13 +155,17 @@ func arrayP(ptype arrayPredicateType, p predicate.Predicate) predicate.Predicate
 		msg := fmt.Sprintf("meta.arrayP called with an unkown ptype %v", ptype.t)
 		panic(msg)
 	}
+	arryP.SchemaP = p.(Predicate).schemaP()
+	arryP.SchemaP.updateKS(func(ks keySequence) keySequence {
+		return ks.AddArray()
+	})
 	return arryP
 }
 
 // toArrayP is a helper for arrayP that's meant to reduce
 // the boilerplate type validation.
 func toArrayP(p func([]interface{}) bool) genericPredicate {
-	return genericPredicate(func(v interface{}) bool {
+	return genericP(func(v interface{}) bool {
 		arrayV, ok := v.([]interface{})
 		if !ok {
 			return false
@@ -173,23 +177,26 @@ func toArrayP(p func([]interface{}) bool) genericPredicate {
 type arrayPredicate struct {
 	genericPredicate
 	ptype arrayPredicateType
-	p predicate.Predicate
+	p     predicate.Predicate
 }
 
+// Note that since e.g. "! [?] p" == [*] ! sp", and "sp" is negated
+// with its predicate "arryP.p", Negate() still works for schema
+// predicates.
 func (arryP *arrayPredicate) Negate() predicate.Predicate {
 	switch t := arryP.ptype.t; t {
 	case 's':
-		// Not("Some element satisfies p") => "All elements satisfy Not(p)"
+		// "! [?] p" == "[*] ! p"
 		ptype := arrayPredicateType{}
 		ptype.t = 'a'
 		return arrayP(ptype, arryP.p.Negate())
 	case 'a':
-		// Not("All elements satisfy p") => "Some element satisfies Not(p)"
+		// "! [*] p" == "[?] p"
 		ptype := arrayPredicateType{}
 		ptype.t = 's'
 		return arrayP(ptype, arryP.p.Negate())
 	case 'n':
-		// Not("Nth element satisfies p") => "Nth element satisfies Not(p)"
+		// "! [N] p" == "[N] ! p"
 		return arrayP(arryP.ptype, arryP.p.Negate())
 	default:
 		msg := fmt.Sprintf("meta.arrayPredicate contains an unknown ptype %v", t)

@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	apitypes "github.com/puppetlabs/wash/api/types"
+	"github.com/puppetlabs/wash/plugin"
 )
 
 // EntrySchema is a wrapper to apitypes.EntrySchema
@@ -12,6 +13,12 @@ type EntrySchema struct {
 	*apitypes.EntrySchema
 	// Use a map for faster lookup
 	Children map[string]*EntrySchema
+	// The MetadataSchema here is the metadata schema that
+	// we will be applying the meta primary's schema predicate
+	// with. That schema will be filled-in by the Walker since
+	// it requires one to know whether the fullmeta option was
+	// set.
+	MetadataSchema *plugin.JSONSchema
 }
 
 // NewEntrySchema returns a new EntrySchema object. The returned

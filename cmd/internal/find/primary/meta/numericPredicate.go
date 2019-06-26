@@ -34,13 +34,13 @@ func parseNumericPredicate(tokens []string) (predicate.Predicate, []string, erro
 
 func numericP(p numeric.Predicate) predicate.Predicate {
 	return &numericPredicate{
-		genericPredicate: func(v interface{}) bool {
+		genericPredicate: genericP(func(v interface{}) bool {
 			floatV, ok := v.(float64)
 			if !ok {
 				return false
 			}
 			return p(int64(floatV))
-		},
+		}),
 		p: p,
 	}
 }

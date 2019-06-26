@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"github.com/puppetlabs/wash/cmd/internal/find/params"
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/puppetlabs/wash/cmd/internal/find/primary/numeric"
 	"github.com/stretchr/testify/suite"
 )
 
 type TimePredicateTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *TimePredicateTestSuite) TestErrors() {
@@ -43,10 +42,16 @@ func (s *TimePredicateTestSuite) TestValidInputFalseValues() {
 	s.RNTC("-2h", "", addTRT(5*numeric.DurationOf('h')))
 }
 
+func (s *TimePredicateTestSuite) TestValidInput_SchemaP() {
+	s.RSTC("2h", "", "p")
+	s.RSNTC("2h", "", "o")
+	s.RSNTC("2h", "", "a")
+}
+
 func (s *TimePredicateTestSuite) TestTimeP_Negation_NotATime() {
 	d := 5 * numeric.DurationOf('h')
 	tp := timeP(true, func(n int64) bool {
-		return n > d 
+		return n > d
 	})
 	s.False(tp.Negate().IsSatisfiedBy("not_a_valid_time_value"))
 }
@@ -60,24 +65,24 @@ func (s *TimePredicateTestSuite) TestTimeP_Negation_TimeMismatch() {
 	tp := timeP(true, func(n int64) bool {
 		return n > d
 	})
-	s.False(tp.Negate().IsSatisfiedBy(addTRT(d+1)))
-	s.False(tp.Negate().IsSatisfiedBy(addTRT(d-1)))
+	s.False(tp.Negate().IsSatisfiedBy(addTRT(d + 1)))
+	s.False(tp.Negate().IsSatisfiedBy(addTRT(d - 1)))
 
 	// Test future queries
 	tp = timeP(false, func(n int64) bool {
-		return n > d 
+		return n > d
 	})
-	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d+1))))
-	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d-1))))
+	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d + 1))))
+	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d - 1))))
 }
 
 func (s *TimePredicateTestSuite) TestTimeP_Negation() {
 	d := 5 * numeric.DurationOf('h')
 	tp := timeP(true, func(n int64) bool {
-		return n > d 
+		return n > d
 	})
-	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d+1))))
-	s.True(tp.Negate().IsSatisfiedBy(addTRT(-(d-1))))
+	s.False(tp.Negate().IsSatisfiedBy(addTRT(-(d + 1))))
+	s.True(tp.Negate().IsSatisfiedBy(addTRT(-(d - 1))))
 }
 
 // addTRT => addToReferenceTime. Saves some typing. Note that v

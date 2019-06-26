@@ -3,14 +3,13 @@ package meta
 import (
 	"testing"
 
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/puppetlabs/wash/cmd/internal/find/primary/numeric"
 	"github.com/stretchr/testify/suite"
 )
 
 type PrimitivePredicateTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *PrimitivePredicateTestSuite) TestErrors() {
@@ -35,6 +34,14 @@ func (s *PrimitivePredicateTestSuite) TestValidInput() {
 	s.RTC("+{1h}", "", addTRT(2*numeric.DurationOf('h')))
 	s.RTC("foo", "", "foo")
 	s.RTC("+foo", "", "+foo")
+}
+
+func (s *PrimitivePredicateTestSuite) TestValidInput_SchemaP() {
+	for _, input := range []string{ /*"-null", "-exists",*/ "-true" /*, "-false"*/} {
+		s.RSTC(input, "", "p")
+		s.RSNTC(input, "", "o")
+		s.RSNTC(input, "", "a")
+	}
 }
 
 func (s *PrimitivePredicateTestSuite) TestNullP() {

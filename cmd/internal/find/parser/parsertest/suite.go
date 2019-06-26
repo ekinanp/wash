@@ -107,7 +107,6 @@ func (suite *Suite) TeardownTest() {
 	params.ReferenceTime = time.Time{}
 }
 
-
 // falseV's a wrapper type that's used to distingush between "positive" and "negative"
 // satisfying values. We need it b/c "nil" could be a satisfying value.
 type falseV struct {

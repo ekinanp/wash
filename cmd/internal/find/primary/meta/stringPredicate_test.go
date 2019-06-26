@@ -3,13 +3,12 @@ package meta
 import (
 	"testing"
 
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/stretchr/testify/suite"
 )
 
 type StringPredicateTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *StringPredicateTestSuite) TestErrors() {
@@ -22,6 +21,12 @@ func (s *StringPredicateTestSuite) TestErrors() {
 func (s *StringPredicateTestSuite) TestValidInput() {
 	s.RTC("foo -size", "-size", "foo")
 	s.RNTC("foo -size", "-size", "bar")
+}
+
+func (s *StringPredicateTestSuite) TestValidInput_SchemaP() {
+	s.RSTC("foo", "", "p")
+	s.RSNTC("foo", "", "o")
+	s.RSNTC("foo", "", "a")
 }
 
 func (s *StringPredicateTestSuite) TestStringP_NotAString() {
@@ -39,7 +44,7 @@ func (s *StringPredicateTestSuite) TestStringP() {
 	})
 
 	s.True(sp.IsSatisfiedBy("f"))
-	
+
 	// Test negation
 	s.False(sp.Negate().IsSatisfiedBy("f"))
 	s.True(sp.Negate().IsSatisfiedBy("g"))

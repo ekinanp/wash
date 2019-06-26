@@ -3,13 +3,12 @@ package meta
 import (
 	"testing"
 
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/stretchr/testify/suite"
 )
 
 type EmptyPredicateTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *EmptyPredicateTestSuite) TestErrors() {
@@ -30,7 +29,7 @@ func (s *EmptyPredicateTestSuite) TestEmptyPInvalidType() {
 func (s *EmptyPredicateTestSuite) TestEmptyPObject() {
 	mp := make(map[string]interface{})
 	p := emptyP(false)
-	
+
 	// Test empty map
 	s.True(p.IsSatisfiedBy(mp))
 	s.False(p.Negate().IsSatisfiedBy(mp))

@@ -4,20 +4,19 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/stretchr/testify/suite"
 )
 
 // The predicates are tested separately in their *Predicate.go files, so they
 // will not be tested here. Instead, the tests here serve as "integration tests" for
 // the parsePredicateExpression function. They're meant to test parser errors, each of
-// the operators, and whether operator precedence is enforced. 
+// the operators, and whether operator precedence is enforced.
 //
 // Note that inner expressions are tested in ObjectPredicate/ArrayPredicate since that
 // is where they are used. They're also tested in the meta primary tests.
 
 type PredicateExpressionTestSuite struct {
-	parsertest.Suite
+	parserTestSuite
 }
 
 func (s *PredicateExpressionTestSuite) RETC(input string, errRegex string) {
@@ -84,7 +83,7 @@ func (s *PredicateExpressionTestSuite) TestNotOpEval() {
 	// boolean predicate
 	s.RNTC("-not -true -primary", "-primary", "false")
 	s.RNTC("-not -not -true -primary", "-primary", "true")
-	// string predicate	
+	// string predicate
 	s.RNTC("-not f -primary", "-primary", 'g')
 	s.RNTC("-not -not f -primary", "-primary", 'f')
 	// time predicate
