@@ -115,6 +115,13 @@ func (s *WalkerTestSuite) TestWalk_WithSchema_HappyCase() {
 	)
 }
 
+func (s *WalkerTestSuite) TestWalk_SchemaUnknown_MetaPrimarySet_SkipsEntry() {
+	primary.Parser.SetPrimaries[primary.Meta] = true
+	s.setupDefaultMocksForWalk()
+	s.False(s.walker.Walk("."))
+	s.Regexp("Skipping.*'\\.'", s.Stderr())
+}
+
 func (s *WalkerTestSuite) TestWalk_MaxdepthSet() {
 	s.setupDefaultMocksForWalk()
 	s.walker.opts.Maxdepth = 2

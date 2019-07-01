@@ -1,6 +1,8 @@
 package find
 
 import (
+	"fmt"
+
 	"github.com/puppetlabs/wash/api/client"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser"
 	"github.com/puppetlabs/wash/cmd/internal/find/primary"
@@ -42,8 +44,14 @@ func (w *walkerImpl) Walk(path string) bool {
 		return false
 	}
 	if s != nil {
-		schema := types.Prune(types.NewEntrySchema(s), w.p.SchemaP())
+		schema := types.Prune(types.NewEntrySchema(s, w.opts), w.p.SchemaP())
 		e.SetSchema(schema)
+	}
+	if !e.SchemaKnown {
+		if primary.IsSet(primary.Meta) {
+			fmt.Fprintf(cmdutil.Stderr, "Skipping '%v'. Reason: The meta primary is set, but the entry's schema is unknown\n", path)
+			return false
+		}
 	}
 	return w.walk(e, 0)
 }
@@ -98,6 +106,7 @@ func (w *walkerImpl) visit(e types.Entry, depth uint) bool {
 			return true
 		}
 	}
+
 	if primary.IsSet(primary.Meta) && w.opts.Fullmeta {
 		// Fetch the entry's full metadata
 		meta, err := w.conn.Metadata(e.Path)
