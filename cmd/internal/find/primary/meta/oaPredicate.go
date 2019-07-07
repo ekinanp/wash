@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"github.com/puppetlabs/wash/cmd/internal/find/parser/expression"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 )
 
@@ -15,7 +16,7 @@ func parseOAPredicate(tokens []string) (Predicate, []string, error) {
 		},
 	}
 	p, tokens, err := cp.Parse(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		return nil, tokens, err
 	}
 	return p.(Predicate), tokens, err

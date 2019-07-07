@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/errz"
+	"github.com/puppetlabs/wash/cmd/internal/find/parser/expression"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/puppetlabs/wash/cmd/internal/find/types"
 	cmdutil "github.com/puppetlabs/wash/cmd/util"
@@ -77,11 +78,11 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 	}
 	tokens = tokens[1:]
 	p, tokens, err := primary.Parse(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		return nil, nil, fmt.Errorf("%v: %v", token, err)
 	}
 	parser.SetPrimaries[primary] = true
-	return p, tokens, nil
+	return p, tokens, err
 }
 
 func (parser *parser) add(p *Primary) *Primary {

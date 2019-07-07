@@ -121,17 +121,21 @@ func (parser *parser) IsOp(token string) bool {
 
 /*
 Parse parses a predicate expression captured by the given tokens. It will process
-the tokens until it either (1) exhausts the input tokens, (2) stumbles upon a
-a token that it cannot parse, or (3) finds a syntax error. For Cases (1) and (2),
-Parse will return a syntax error if it did not parse a predicate. Otherwise, it will
-return the parsed predicate + any remaining tokens. Case (2) will also return an
-UnknownTokenError containing the offending token.
+the tokens until it either:
+	(1) Exhausts the input tokens
+	(2) Stumbles upon a a token that it cannot parse
+	(3) Stumbles upon an incomplete operator (i.e. a dangling ")" or a "!" operator)
+	(4) Finds a syntax error
+For Cases (1), (2), and (3), Parse will return a syntax error if it did not parse a
+predicate. Otherwise, it will return the parsed predicate + any remaining tokens. Case
+(2) will return an UnknownTokenError containing the offending token. Case (3) will return
+an IncompleteOperatorError.
 
-Case 2's useful if we're parsing an expression inside an expression. It lets the caller
-decide if they've finished parsing the inner expression. We will take advantage of Case 2
-when parsing `meta` primary expressions.
+Cases 2 and 3 are useful if we're parsing an expression inside an expression. They let
+the caller decide if they've finished parsing the inner expression. We take advantage of
+Cases 2 & 3 when parsing `meta` primary expressions.
 
-If tokens is empty, then Parse will return an ErrEmptyExpression error.
+NOTE: If tokens is empty, then Parse will return an ErrEmptyExpression error.
 */
 func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, error) {
 	parser.setStack(newEvalStack(parser.binaryOps["-a"]))
@@ -141,7 +145,7 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 	// := operator's scoping rules. tks is used to avoid accidentally
 	// overwriting tokens.
 	//
-	// POST-LOOP INVARIANT: err == nil or err is an UnknownTokenError
+	// POST-LOOP INVARIANT: err == nil or err is an UnknownTokenError/IncompleteOperatorError
 	var p predicate.Predicate
 	var tks []string
 	var err error
@@ -154,7 +158,9 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 		token := tokens[0]
 		if token == ")" {
 			if !parser.insideParens() {
-				return nil, nil, fmt.Errorf("): no beginning '('")
+				err = IncompleteOperatorError{
+					"): no beginning '('",
+				}
 			}
 			// We've finished parsing a parenthesized expression
 			break
@@ -168,6 +174,30 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 			continue
 		}
 		if !errz.IsMatchError(err) {
+			if IsIncompleteOperatorError(err) {
+				// This is possible if the atom corresponds to an inner predicate
+				// expression
+				if p != nil {
+					// A predicate was parsed, so push the parsed predicate onto the
+					// stack. Then set tokens to tks and reset the error. This way,
+					// we the callers handle the incomplete operator error via the
+					// next iteration.
+					parser.stack().pushPredicate(p)
+					tokens = tks
+					err = nil
+					continue
+				}
+				// A predicate wasn't parsed. This is possible via something like
+				// "-m .key -exists -a ! -name foo" where the "!" would return this
+				// error because "-name" is not a valid meta primary expression.
+				//
+				// If we hit this case, that means parsing's finished. Thus, we break
+				// out of the loop and let our caller handle the IncompleteOperatorError.
+				// Note that in our example, this would mean that `wash find`'s top-level
+				// expression parser would handle the "! -name foo" part of the expression,
+				// which is correct.
+				break
+			}
 			// Syntax error when parsing the atom, so return the error
 			return nil, nil, err
 		}
@@ -203,15 +233,16 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 	// Parsing's finished.
 	if parser.stack().Len() <= 0 {
 		// We didn't parse anything. Either we have an empty expression, or
-		// err is an UnknownTokenError
+		// err is an UnknownTokenError/IncompleteOperatorError
 		if err == nil {
 			err = NewEmptyExpressionError("empty expression")
 		}
-		// err is an UnknownTokenError
+		// err is an UnknownTokenError/IncompleteOperatorError
 		return nil, tokens, err
 	}
 	if _, ok := parser.stack().Peek().(*BinaryOp); ok {
-		// This codepath is possible via something like "p1 -and" or "p1 -and <unknown_token>"
+		// This codepath is possible via something like "p1 -and" or
+		// "p1 -and <unknown_token>/<incomplete_operator>"
 		if err == nil {
 			// We have "p1 -and"
 			return nil, nil, fmt.Errorf(
@@ -220,12 +251,13 @@ func (parser *parser) Parse(tokens []string) (predicate.Predicate, []string, err
 				parser.stack().mostRecentOpToken,
 			)
 		}
-		// We have "p1 -and <unknown_token>". Pop the binary op off the stack and include
-		// it as part of the remaining tokens. This is useful in case our expression is inside
-		// another expression, where the top-level expression handles combining our parsed
-		// predicate p with whatever's parsed by the "<unknown_token>" bit. For example, it
-		// ensures that the top-level `wash find` parser correctly parses something like
-		// "-m .key foo -o -m .key bar" as "Meta(.key, foo) -o Meta(.key, bar)".
+		// We have "p1 -and <unknown_token>/<incomplete_operator>". Pop the binary op off the
+		// stack, include it as part of the remaining tokens, and let the caller handle the
+		// error. The latter's useful in case our expression is inside another expression, where
+		// the top-level expression handles combining our parsed predicate p with whatever's parsed
+		// by the "<unknown_token>" bit (or). For example, it ensures that the top-level `wash find`
+		// parser correctly parses something like "-m .key foo -o -m .key bar" as
+		// "Meta(.key, foo) -o Meta(.key, bar)".
 		parser.stack().Pop()
 		tokens = append([]string{parser.stack().mostRecentOpToken}, tokens...)
 	}

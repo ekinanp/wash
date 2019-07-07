@@ -2,6 +2,7 @@
 package meta
 
 import (
+	"github.com/puppetlabs/wash/cmd/internal/find/parser/expression"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 	"github.com/puppetlabs/wash/cmd/internal/find/types"
 )
@@ -11,7 +12,8 @@ import (
 // Parse is the meta primary's parse function.
 func Parse(tokens []string) (types.EntryPredicate, []string, error) {
 	p, tokens, err := parseExpression(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
+		// We've hit a syntax error
 		return nil, nil, err
 	}
 	entryP := types.ToEntryP(func(e types.Entry) bool {
@@ -20,7 +22,7 @@ func Parse(tokens []string) (types.EntryPredicate, []string, error) {
 	entryP.SetSchemaP(&entrySchemaPredicate{
 		p: p.(Predicate).schemaP(),
 	})
-	return entryP, tokens, nil
+	return entryP, tokens, err
 }
 
 // entrySchemaPredicate is the meta primary's entry schema predicate.

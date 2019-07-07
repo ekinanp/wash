@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/errz"
+	"github.com/puppetlabs/wash/cmd/internal/find/parser/expression"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 )
 
@@ -57,7 +58,7 @@ func parseArrayP(tokens []string, baseCaseParser, keySequenceParser predicate.Pa
 		p, tokens, err = keySequenceParser.Parse(tokens)
 	}
 
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		if errz.IsMatchError(err) {
 			parsedToken := rawToken[0 : len(rawToken)-len(token)]
 			return nil, nil, fmt.Errorf("expected a predicate after %v", parsedToken)

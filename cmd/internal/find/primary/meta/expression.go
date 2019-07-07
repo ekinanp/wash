@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/errz"
+	"github.com/puppetlabs/wash/cmd/internal/find/parser/expression"
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/predicate"
 )
 
@@ -19,7 +20,7 @@ import (
 //     ArrayExpression  => ‘[' ? ‘]’ (PredicateExpression | OAExpression) |
 //                         ‘[' * ‘]’ (PredicateExpression | OAExpression) |
 //                         ‘[' N ‘]’ (PredicateExpression | OAExpression) |
-// 
+//
 // For ObjectExpression/ArrayExpression, assume their parsers are given a tokens
 // array that's something like [<token>, <rest>...]. Then, if <token> does not
 // contain a key sequence, <rest> will be parsed as a PredicateExpression. Otherwise,
@@ -43,15 +44,15 @@ import (
 // is an object with 'key3' set to false". We could get our example to parse correctly with the
 // above grammar via something like "-meta .key1 \( .key2 -true -a .key3 -false \)", but that is
 // annoying and unnecessary clutter.
-//    
+//
 // Thus, the rules for PredicateExpression/OAExpression allow one to cleanly combine object/array
-// predicates on entry metadata values without having to use a parentheses. 
+// predicates on entry metadata values without having to use a parentheses.
 func parseExpression(tokens []string) (predicate.Predicate, []string, error) {
 	if p, tokens, err := parseEmptyPredicate(tokens); err == nil {
 		return p, tokens, err
 	}
 	p, tokens, err := parseObjectExpression(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		if errz.IsMatchError(err) {
 			// We expect an ObjectExpression, so treat any match errors
 			// as syntax errors.
@@ -59,7 +60,7 @@ func parseExpression(tokens []string) (predicate.Predicate, []string, error) {
 		}
 		return nil, nil, err
 	}
-	return p, tokens, nil
+	return p, tokens, err
 }
 
 func parseObjectExpression(tokens []string) (predicate.Predicate, []string, error) {
@@ -80,7 +81,7 @@ func parseOAExpression(tokens []string) (predicate.Predicate, []string, error) {
 		},
 	}
 	p, tokens, err := cp.Parse(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		if errz.IsMatchError(err) {
 			// We should never hit this code-path because parseOAExpression
 			// will only be called by parseObjectExpression/parseArrayExpression
@@ -94,7 +95,7 @@ func parseOAExpression(tokens []string) (predicate.Predicate, []string, error) {
 		}
 		return nil, nil, err
 	}
-	return p, tokens, nil
+	return p, tokens, err
 }
 
 func parseArrayExpression(tokens []string) (predicate.Predicate, []string, error) {

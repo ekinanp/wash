@@ -31,7 +31,7 @@ func (parser *predicateExpressionParser) Parse(tokens []string) (predicate.Predi
 		return nil, nil, expression.NewEmptyExpressionError("expected a predicate expression")
 	}
 	p, tks, err := parser.Parser.Parse(tokens)
-	if err != nil {
+	if err != nil && !expression.IsIncompleteOperatorError(err) {
 		tkErr, ok := err.(expression.UnknownTokenError)
 		if !ok {
 			// We have a syntax error or an EmptyExpressionError. The latter's possible if
@@ -42,9 +42,9 @@ func (parser *predicateExpressionParser) Parse(tokens []string) (predicate.Predi
 			// possible via something like "-size + 1"
 			return nil, tks, fmt.Errorf("unknown predicate %v", tkErr.Token)
 		}
+		// This predicate expression parser is the top level predicate expression parser. This
+		// means that we've finished parsing the `meta` primary's predicate expression.
+		err = nil
 	}
-	// If err != nil here, then err is an UnknownTokenError and this predicate expression
-	// parser is the top level predicate expression parser. These both mean that we've
-	// finished parsing the `meta` primary's predicate expression.
-	return p, tks, nil
+	return p, tks, err
 }

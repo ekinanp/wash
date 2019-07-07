@@ -34,3 +34,22 @@ func IsEmptyExpressionError(err error) bool {
 	_, ok := err.(EmptyExpressionError)
 	return ok
 }
+
+// IncompleteOperatorError represents an incomplete operator that
+// was found when parsing the expression. The set of possible
+// incomplete operators consists of the parens "()" operator, and
+// the "not" operator.
+type IncompleteOperatorError struct {
+	Reason string
+}
+
+func (e IncompleteOperatorError) Error() string {
+	return e.Reason
+}
+
+// IsIncompleteOperatorError returns true if err is an IncompleteOperatorError
+// object, false otherwise.
+func IsIncompleteOperatorError(err error) bool {
+	_, ok := err.(IncompleteOperatorError)
+	return ok
+}

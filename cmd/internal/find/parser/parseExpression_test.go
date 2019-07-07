@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ekinanp/jsonschema"
+
 	"github.com/puppetlabs/wash/cmd/internal/find/parser/parsertest"
 	"github.com/puppetlabs/wash/cmd/internal/find/types"
 	"github.com/stretchr/testify/suite"
@@ -131,8 +132,8 @@ func (s *ParseExpressionTestSuite) TestParseExpressionComplexEval() {
 	m := make(map[string]interface{})
 	m["key"] = "foo"
 	entry := types.Entry{}
+	entry.CName = "foo"
 	entry.Metadata = m
-
 	s.RTC("( -true -o -true ) -false", false)
 	// Should be parsed as (-true -a -false) -o -true which evaluates to true.
 	s.RTC("-true -false -o -true", true)
@@ -142,6 +143,18 @@ func (s *ParseExpressionTestSuite) TestParseExpressionComplexEval() {
 	// we're providing our own entry
 	s.Suite.RTC("-m .key foo -o -m .key bar", "", entry)
 	s.Suite.RNTC("-m .key foo -a -m .key bar", "", entry)
+	// These tests check that the meta primary parser hands back
+	// IncompleteOperatorErrors to the caller. Note that we use
+	// "-name" instead of "-false"/"-true" because the latter
+	// are valid meta primary predicates.
+	//
+	// Note that the corresponding RNTC test case is an extra
+	// sanity check to ensure that we're not getting any false
+	// positives.
+	s.Suite.RTC("( -m .key -exists )", "", entry)
+	s.Suite.RNTC("! ( -m .key -exists )", "", entry)
+	s.Suite.RTC("-m .key -exists -a ! -name goo", "", entry)
+	s.Suite.RNTC("-m .key -exists -a ! -name foo", "", entry)
 }
 
 func (s *ParseExpressionTestSuite) TestParseExpressionSchemaPEval() {
