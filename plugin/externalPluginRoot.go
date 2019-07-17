@@ -56,7 +56,7 @@ it's safe to omit name from the response to 'init'`, r.script.Path()))
 	if decodedRoot.Methods == nil {
 		decodedRoot.Methods = []interface{}{"list"}
 	}
-	entry, err := decodedRoot.toExternalPluginEntry(false, true)
+	entry, err := decodedRoot.toExternalPluginEntry(decodedRoot.Name, false, true)
 	if err != nil {
 		return err
 	}

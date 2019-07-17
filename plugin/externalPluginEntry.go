@@ -73,7 +73,7 @@ func mungeToMethods(input []interface{}) (map[string]interface{}, error) {
 	return methods, nil
 }
 
-func (e decodedExternalPluginEntry) toExternalPluginEntry(schemaKnown bool, isRoot bool) (*externalPluginEntry, error) {
+func (e decodedExternalPluginEntry) toExternalPluginEntry(pluginName string, schemaKnown bool, isRoot bool) (*externalPluginEntry, error) {
 	if len(e.Name) <= 0 {
 		return nil, fmt.Errorf("the entry name must be provided")
 	}
@@ -121,12 +121,16 @@ func (e decodedExternalPluginEntry) toExternalPluginEntry(schemaKnown bool, isRo
 		e.Attributes.SetSize(uint64(len(content)))
 	}
 
+	typeID := e.TypeID
+	if len(typeID) > 0 {
+		typeID = pluginName + "::" + typeID
+	}
 	entry := &externalPluginEntry{
 		EntryBase:   NewEntry(e.Name),
 		methods:     methods,
 		state:       e.State,
 		schemaKnown: schemaKnown,
-		typeID:      e.TypeID,
+		typeID:      typeID,
 	}
 	entry.SetAttributes(e.Attributes)
 	entry.setCacheTTLs(e.CacheTTLs)
@@ -315,8 +319,9 @@ func (e *externalPluginEntry) List(ctx context.Context) ([]Entry, error) {
 	}
 
 	entries := make([]Entry, len(decodedEntries))
+	pluginName, _ := e.splitTypeID()
 	for i, decodedExternalPluginEntry := range decodedEntries {
-		entry, err := decodedExternalPluginEntry.toExternalPluginEntry(e.schemaKnown, false)
+		entry, err := decodedExternalPluginEntry.toExternalPluginEntry(pluginName, e.schemaKnown, false)
 		if err != nil {
 			return nil, err
 		}
@@ -511,7 +516,27 @@ func newStdoutDecodeErr(ctx context.Context, decodedThing string, reason error, 
 	return newInvokeError(fmt.Sprintf("could not decode %v from stdout: %v", decodedThing, reason), inv)
 }
 
+// splitTypeID splits e's type ID to (<plugin_name>, <raw_type_id>).
+func (e *externalPluginEntry) splitTypeID() (string, string) {
+	if len(e.typeID) <= 0 {
+		// Plugin name could be "unknown" if an ancestor of "e" did not return
+		// a type ID. This is only possible if a plugin author isn't using entry
+		// schemas, but still wants to pass-around a type ID to take advantage of
+		// simpler optimization heuristics (like in `wash validate`). Thus, it is
+		// an edge-case.
+		//
+		// NOTE: We could have some more complicated logic in Wash to extract the
+		// plugin-name in a memory-efficient way, but this edge-case isn't a good
+		// enough reason to include that logic.
+		return "__unknown__", ""
+	}
+	splitTypeID := strings.SplitN(e.typeID, "::", 2)
+	return splitTypeID[0], splitTypeID[1]
+}
+
 func (e *externalPluginEntry) unmarshalSchemaGraph(stdout []byte) (*linkedhashmap.Map, error) {
+	pluginName, rawTypeID := e.splitTypeID()
+
 	// Since we know e's type ID, it is OK if the serialized schema's keys are
 	// out of order. However, the entry schema returned by the Wash API always
 	// ensures that the first key is the entry's type ID. Thus, we unmarshal the
@@ -525,8 +550,8 @@ func (e *externalPluginEntry) unmarshalSchemaGraph(stdout []byte) (*linkedhashma
 	if len(rawGraph) <= 0 {
 		return nil, fmt.Errorf("expected a non-empty JSON object")
 	}
-	if rawGraph[e.typeID] == nil {
-		return nil, fmt.Errorf("%v's schema is missing", e.typeID)
+	if rawGraph[rawTypeID] == nil {
+		return nil, fmt.Errorf("%v's schema is missing", rawTypeID)
 	}
 
 	// Convert each node in the rawGraph to an EntrySchema object. This step
@@ -597,10 +622,10 @@ func (e *externalPluginEntry) unmarshalSchemaGraph(stdout []byte) (*linkedhashma
 		graph.Put(typeID, node.entrySchema)
 		return nil
 	}
-	if err := putNode(e.typeID, rawGraph[e.typeID]); err != nil {
+	if err := putNode(rawTypeID, rawGraph[e.typeID]); err != nil {
 		return nil, err
 	}
-	delete(rawGraph, e.typeID)
+	delete(rawGraph, rawTypeID)
 	for typeID, schema := range rawGraph {
 		if err := putNode(typeID, schema); err != nil {
 			return nil, err
