@@ -10,6 +10,8 @@ type EntryPredicate interface {
 	P(Entry) bool
 	SchemaP() EntrySchemaPredicate
 	SetSchemaP(EntrySchemaPredicate)
+	SchemaRequired() bool
+	RequireSchema()
 }
 
 // ToEntryP converts p to an EntryPredicate object
@@ -48,6 +50,13 @@ type entryPredicate struct {
 	// Maintain a SchemaP object for the walker so that it only
 	// traverses satisfying paths.
 	schemaP EntrySchemaPredicate
+	// Some primaries (e.g. "kind") only make sense for entries
+	// with schemas. For those primaries, schemaRequired will
+	// be set to true. This way, if the user runs something like
+	// `wash find -kind '*doc*container'`, the Walker will know
+	// not to traverse any schema-less plugins (since the kinds
+	// of entries in those plugins is unknown).
+	schemaRequired bool
 }
 
 func (p1 *entryPredicate) P(e Entry) bool {
@@ -69,6 +78,10 @@ func (p1 *entryPredicate) Negate() predicate.Predicate {
 			return !p1.P(e)
 		},
 		schemaP: p1.SchemaP().Negate().(EntrySchemaPredicate),
+		// schemaRequired shouldn't be negated because that is intrinsic
+		// to the primary. For example, something like "! -kind '*dock*container'"
+		// is parsed as "return anything that isn't a Docker container" so
+		// it is still filtering on specific kinds of entries.
 	}
 }
 
@@ -79,6 +92,14 @@ func (p1 *entryPredicate) IsSatisfiedBy(v interface{}) bool {
 		return false
 	}
 	return p1.P(entry)
+}
+
+func (p1 *entryPredicate) SchemaRequired() bool {
+	return p1.schemaRequired
+}
+
+func (p1 *entryPredicate) RequireSchema() {
+	p1.schemaRequired = true
 }
 
 // EntryPredicateAnd represents an And operation on Entry predicates
@@ -94,7 +115,8 @@ func (op *EntryPredicateAnd) Combine(p1 predicate.Predicate, p2 predicate.Predic
 	ep2 := p2.(EntryPredicate)
 	return &EntryPredicateAnd{
 		entryPredicate: &entryPredicate{
-			schemaP: newEntrySchemaPredicateAnd(ep1.SchemaP(), ep2.SchemaP()),
+			schemaP:        newEntrySchemaPredicateAnd(ep1.SchemaP(), ep2.SchemaP()),
+			schemaRequired: ep1.SchemaRequired() && ep2.SchemaRequired(),
 		},
 		p1: ep1,
 		p2: ep2,
@@ -129,7 +151,8 @@ func (op *EntryPredicateOr) Combine(p1 predicate.Predicate, p2 predicate.Predica
 	ep2 := p2.(EntryPredicate)
 	return &EntryPredicateOr{
 		entryPredicate: &entryPredicate{
-			schemaP: newEntrySchemaPredicateOr(ep1.SchemaP(), ep2.SchemaP()),
+			schemaP:        newEntrySchemaPredicateOr(ep1.SchemaP(), ep2.SchemaP()),
+			schemaRequired: ep1.SchemaRequired() || ep2.SchemaRequired(),
 		},
 		p1: ep1,
 		p2: ep2,

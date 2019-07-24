@@ -49,6 +49,17 @@ func (suite *EntrySchemaTestSuite) TestUnmarshalJSON_KnownSchema_ValidSchema() {
 		A := suite.findNestedChild(s)
 		ABEA := suite.findNestedChild(A, "B", "E", "A")
 		suite.True(A == ABEA, "A != ABEA")
+
+		// Ensure that pathsToNode is correct for all the nodes
+		suite.ElementsMatch(
+			[]string{"A", "A/B/E/A"},
+			A.pathsToNode,
+		)
+		C := suite.findNestedChild(s, "C")
+		suite.ElementsMatch(
+			[]string{"A/B/E/C", "A/B/E/C/C", "A/C", "A/C/C"},
+			C.pathsToNode,
+		)
 	}
 }
 

@@ -16,7 +16,8 @@ import (
 // swagger:response
 type EntrySchema struct {
 	plugin.EntrySchema
-	children []*EntrySchema
+	pathsToNode []string
+	children    []*EntrySchema
 	// graph is an ordered map of `<TypeID>` => `<EntrySchema>`. We store it to make
 	// MarshalJSON's implementation easier.
 	//
@@ -84,6 +85,51 @@ func (s *EntrySchema) UnmarshalJSON(data []byte) error {
 			schema.children = append(schema.children, rawChild.(*EntrySchema))
 		}
 	})
+
+	// Fill-in the paths
+	var fillPaths func(string, *EntrySchema, map[string]bool)
+	fillPaths = func(curPath string, s *EntrySchema, visited map[string]bool) {
+		s.pathsToNode = append(s.pathsToNode, curPath)
+		if visited[s.TypeID()] {
+			return
+		}
+		visited[s.TypeID()] = true
+		for _, child := range s.Children() {
+			curPath := curPath + "/" + child.Label()
+			fillPaths(curPath, child, visited)
+		}
+		// s.pathsToNode should match what the user sees when running the
+		// stree command. For example, given something like
+		//   docker
+		//   ├── containers
+		//   │   └── [container]
+		//   │       ├── log
+		//   │       ├── metadata.json
+		//   │       └── fs
+		//   │           ├── [dir]
+		//   │           │   ├── [dir]
+		//   │           │   └── [file]
+		//   │           └── [file]
+		//   └── volumes
+		//       └── [volume]
+		//           ├── [dir]
+		//           │   ├── [dir]
+		//           │   └── [file]
+		//           └── [file]
+		//
+		// The pathsToNode for a volume file should be
+		//     "docker/containers/container/fs/dir/file"
+		//     "docker/containers/container/fs/file"
+		//     "docker/volumes/volume/dir/file"
+		//     "docker/volumes/volume/file"
+		//
+		// Deleting s from visited enforces that requirement. Without the
+		// code here, pathsToNode would be incorrect for a volume file
+		// because it would not re-visit the volume directory node once
+		// it starts filling in the paths for the "volumes" directory.
+		delete(visited, s.TypeID())
+	}
+	fillPaths(s.Label(), s, make(map[string]bool))
 
 	return nil
 }
@@ -165,6 +211,18 @@ func (s *EntrySchema) GetChild(typeID string) *EntrySchema {
 func (s *EntrySchema) SetChildren(children []*EntrySchema) *EntrySchema {
 	s.children = children
 	return s
+}
+
+// PathsToNode returns all possible paths to s (relative to the stree [schema-tree]
+// root).
+func (s *EntrySchema) PathsToNode() []string {
+	return s.pathsToNode
+}
+
+// SetPathsToNode sets the pathsToNode field. This should only be called by
+// the tests.
+func (s *EntrySchema) SetPathsToNode(pathsToNode []string) {
+	s.pathsToNode = pathsToNode
 }
 
 // ToMap returns a map of <typeID> => <childTypeIDs...> (i.e. its pre-serialized
