@@ -71,15 +71,16 @@
               {% if tutorial.main %}
                 {% assign tutorial_url = tutorial.url | remove: "/index.html" | relative_url %}
                 <ul>
-                  <a href="{{ tutorial_url }}" class="center-vertical">{{tutorial.title}}</a>
+                  <li><a href="{{ tutorial_url }}" class="center-vertical">{{tutorial.title}}</a>
                   <!-- section[0] contains the URL, section[1] contains the section's title -->
                   {% for section in tutorial.sections %}
-                    <ul>
-                      <a href="{{ tutorial_url | append: '/' | append: section[0] }}" class="center-vertical">
+                    <ol>
+                      <li style="font-size:16px"><a href="{{ tutorial_url | append: '/' | append: section[0] }}" class="center-vertical">
                         {{ section[1] }}
-                      </a>
-                    </ul>
+                      </a></li>
+                    </ol>
                   {% endfor %}
+                  </li>
                 </ul>
               {% endif %}
             {% endfor %}
