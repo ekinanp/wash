@@ -143,47 +143,50 @@ wash . ❯
 Notice that our prompt changed back to `wash . >`. That means we are indeed back at the Wash root. The `W` environment variable stores the Wash root’s absolute path, so you can invoke cd `$W` anytime you want to go back to the Wash root.
 
 # Exercises
-**1.** You can tab-complete entries! Try using tab-completion to type `ls docker/containers/k8s_POD_compose-6c67d745f6-q54n8_docker_57a0f7e9-c41c-11e9-9d31-025000000001_1`.
+1. You can tab-complete entries! Try using tab-completion to type `ls docker/containers/k8s_POD_compose-6c67d745f6-q54n8_docker_57a0f7e9-c41c-11e9-9d31-025000000001_1`.
 
-**2.** You can also glob entries! The following parts are meant to show you some interesting things that you can do with globbing.
+2. You can also glob entries! The following parts are meant to show you some interesting things that you can do with globbing.
 
-* **a.** What’s the output of each of the following commands? Try to figure out the answer without invoking the command. Also, it’s OK to give a high-level overview of the output (i.e. you don’t have to worry about whitespace and about getting the paths right). For example, something like “prints out all the plugins” is an acceptable answer for the command `echo *` (as well as a more specific answer like “prints out aws, docker, kubernetes, and gcp”).
+    1. What’s the output of each of the following commands? Try to figure out the answer without invoking the command. Also, it’s OK to give a high-level overview of the output (i.e. you don’t have to worry about whitespace and about getting the paths right). For example, something like “prints out all the plugins” is an acceptable answer for the command `echo *` (as well as a more specific answer like “prints out aws, docker, kubernetes, and gcp”).
 
-  * `echo docker/*`
-  * `echo docker/containers/*`
-  * `echo docker/containers/k8s*`
-  * `echo docker/containers/k8s*compose*`
-  * `echo docker/volumes/*`
+        1. `echo docker/*`
+        2. `echo docker/containers/*`
+        3. `echo docker/containers/k8s*`
+        4. `echo docker/containers/k8s*compose*`
+        5. `echo docker/volumes/*`
 
-{% capture answer_2a %}
-  <ul>
-    <ul><li>The containers and volumes directories.</li></ul>
-    <ul><li>All Docker containers.</li></ul>
-    <ul><li>All Docker containers that start with <code>k8s</code></li></ul>
-    <ul><li>All Docker containers that contain the <code>k8s*compose</code> string</li></ul>
-    <ul><li>All Docker volumes</li></ul>
-  </ul>
-{% endcapture %}
-{% include exercise_answer.html exercise="2a" answer=answer_2a  %}
+        <details><summary>Expand to reveal answers</summary><ol>
+          <li>The containers and volumes directories.</li>
+          <li>All Docker containers.</li>
+          <li>All Docker containers that start with <code>k8s</code></li>
+          <li>All Docker containers that contain the <code>k8s*compose</code> string</li>
+          <li>All Docker volumes</li>
+        </ol></details>
 
-* **b.** How would you tail every container’s log file? Hint: The invocation is of the form `tail -f <glob>`.
+    1. How would you tail every container’s log file? Hint: The invocation is of the form `tail -f <glob>`.
 
-{% include exercise_answer.html exercise="2b" answer="<code>tail -f docker/containers/*/log</code>" %}
+        <details><summary>Expand to reveal answer</summary>
+        <code>tail -f docker/containers/*/log</code></details>
 
-**3.** This exercise is broken up into several parts.
+1. This exercise is broken up into several parts.
 
-* **a.** We saw three entries when we ls’ed a Docker container: `log`, `fs`, and `metadata.json`. We already know that the `log` entry represents the container’s log. What do you think `fs` represents? Hint: Try cd’ing into it and ls’ing stuff.
+    1. We saw three entries when we ls’ed a Docker container: `log`, `fs`, and `metadata.json`. We already know that the `log` entry represents the container’s log. What do you think `fs` represents? Hint: Try cd’ing into it and ls’ing stuff.
 
-{% include exercise_answer.html exercise="3a" answer="<code>fs</code> represents the root directory of the container’s filesystem. It lets you navigate through the container as if you were logged onto it via something like SSH. As you’ll soon see, this lets you do some pretty cool stuff." %}
+        <details><summary>Expand to reveal answer</summary>
+        <code>fs</code> represents the root directory of the container’s filesystem. It lets you navigate through the container as if you were logged onto it via something like SSH. As you’ll soon see, this lets you do some pretty cool stuff.</details>
 
-* **b.** Inside the same container’s ‘directory’, what command lets you read its `/var/log/messages` file? What command lets you tail it? Hint: `cat` lets you read a file. `tail -f` lets you tail it.
+    1. Inside the same container’s ‘directory’, what command lets you read its `/var/log/messages` file? What command lets you tail it? Hint: `cat` lets you read a file. `tail -f` lets you tail it.
 
-{% include exercise_answer.html exercise="3b" answer="<code>cat fs/var/log/messages</code> lets you read the <code>/var/log/messages</code> file. <code>tail -f fs/var/log/messages</code> lets you tail the <code>/var/log/messages</code> file. Thus, you can read/tail a Docker container’s log files as if you were logged onto it." %}
 
-* **c.** What command lets you tail every container’s `/var/log/messages` file? Hint: See Exercise 2b’s answer.
+        <details><summary>Expand to reveal answer</summary>
+        <code>cat fs/var/log/messages</code> lets you read the <code>/var/log/messages</code> file. <code>tail -f fs/var/log/messages</code> lets you tail the <code>/var/log/messages</code> file. Thus, you can read/tail a Docker container’s log files as if you were logged onto it.</details>
 
-{% include exercise_answer.html exercise="3c" answer="<code>tail -f docker/containers/*/fs/var/log/messages</code>. Thus, you can tail log files on multiple containers." %}
+    1. What command lets you tail every container’s `/var/log/messages` file? Hint: See Exercise 2b’s answer.
 
-* **d.** Again inside the same container’s ‘directory’, what command lets you tail every file with the `.log` extension in its `/var/log` directory? Hint: The glob `**/*.log` matches every file with the `.log` extension, including subdirectories.
+        <details><summary>Expand to reveal answer</summary>
+        <code>tail -f docker/containers/*/fs/var/log/messages</code>. Thus, you can tail log files on multiple containers.</details>
 
-{% include exercise_answer.html exercise="3d" answer="<code>tail -f fs/var/log/**/*.log</code>. This exercise is meant to remind you that everything in Wash is an entry, including a container’s files and directories. That means you can still glob them just like you would if you were logged onto the container." %}
+    1. Again inside the same container’s ‘directory’, what command lets you tail every file with the `.log` extension in its `/var/log` directory? Hint: The glob `**/*.log` matches every file with the `.log` extension, including subdirectories.
+
+        <details><summary>Expand to reveal answer</summary>
+        <code>tail -f fs/var/log/**/*.log</code>. This exercise is meant to remind you that everything in Wash is an entry, including a container’s files and directories. That means you can still glob them just like you would if you were logged onto the container.</details>

@@ -58,6 +58,9 @@
   color: $body-text-color;
 }
 
-.answer {
-  display: none;
+ol ol {
+  list-style-type: lower-alpha;
+  ol {
+    list-style-type: lower-roman;
+  }
 }
