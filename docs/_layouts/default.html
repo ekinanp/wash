@@ -40,6 +40,11 @@
             <span class="nav-header">
               <a href="{{ '/posts' | relative_url }}" class="center-vertical">News</a>
             </span>
+            <ul>
+              {% for post in site.posts limit: 3 %}
+                <li><a href="{{ post.url | remove: "/index.html" | relative_url }}">{{ post.title }}</a> <small>{{ post.date | date: "%Y-%m-%d" }}</small></li>
+              {% endfor %}
+            </ul>
           </li>
 
           <li>
