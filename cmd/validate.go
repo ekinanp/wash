@@ -146,9 +146,10 @@ func validateMain(cmd *cobra.Command, args []string) exitCode {
 
 	// We use a worker pool to limit work-in-progress. Put the plugin on the worker pool.
 	wp := cmdutil.NewPool(parallel)
-	for _, e := range entries {
+	entries.Range(func(_ string, e plugin.Entry) bool {
 		wp.Submit(func() { processEntry(ctx, pw, wp, e, all, errs) })
-	}
+		return true
+	})
 
 	// Wait for work to complete.
 	wp.Finish()
