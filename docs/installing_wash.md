@@ -18,5 +18,8 @@ Wash is distributed as a single binary; the only prerequisite is `libfuse`. Here
 
 * Run `wash --verify-install` to ensure that the installation was successful
     * If anything fails, then check out the [known issues page]({{ '/known_issues' | relative_url }}) to see if the failure(s) correspond to any of the known issues. Otherwise, please don't hesitate to ask us on [slack](https://puppetcommunity.slack.com/app_redirect?channel=wash) for help!
+        * You can use `wash --verify-install` to test any fixes
+
+* You're good to go! Try running `wash` to start up the shell. 
 
 **Note:** Wash collects anonymous data about how you use it. See the [analytics docs]({{ '/docs#analytics' | relative_url }}) for more details.
