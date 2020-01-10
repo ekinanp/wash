@@ -20,8 +20,6 @@ gcp/
 kubernetes/
 ```
 
-**Note:** You might see some warning messages about plugins failing to load. If you are not planning on using those plugins, then feel free to exclude them from the [list of loaded plugins](../../docs#config). Otherwise, follow the suggestions in the warning messages to properly setup the remaining plugins (and remember to restart the Wash shell!).
-
 Each thing listed here is a ‘directory’. Each 'directory' is a Wash plugin, and each Wash plugin serves as an adapter between a given vendor and Wash. Plugins are the sole mode of interaction between a Wash user and a given vendor's API. For example, the `docker` directory lets you interact with Docker resources like containers and volumes. Similarly, the `aws` directory lets you interact with AWS resources like EC2 instances and S3 objects.
 
 Everything in Wash is an entry, including resources. Each plugin provides a hierarchical view of all its entries. With Wash, you navigate through a plugin's API in the same way that you would navigate the Linux command line -- by changing directories, listing the contents of a directory, and performing actions. 

@@ -3,7 +3,7 @@ title: Tutorials
 ---
 **Note:** Make sure you've [installed Wash]({{ '/getting_started' | relative_url }}) before going any further.
 
-This series of hands-on tutorials introduces you to Wash. Each tutorial assumes that you have the [test environment set-up](00_test_environment), and that you have an understanding of Wash’s key abstractions. If you're unfamiliar with Wash, start with the [Fundamentals](01_fundamentals/plugins-actions-entries). You can complete the tutorials in any order. If you're not sure where to start, here are a few good options: 
+This series of (optional) hands-on tutorials introduces you to Wash. Each tutorial assumes that you have the [test environment set-up](00_test_environment), and that you have an understanding of Wash’s key abstractions. If you're unfamiliar with Wash, start with the [Fundamentals](01_fundamentals/plugins-actions-entries). You can complete the tutorials in any order. If you're not sure where to start, here are a few good options: 
 
 * [Filtering entries with find](02_find) is useful if your day-to-day job consists of filtering a bunch of different things. Note that these things do not have to be Docker, Kubernetes, AWS, or GCP resources; they can be anything. And if you're interested in filtering anything, check out [Extending Wash](03_extending_wash).
 
