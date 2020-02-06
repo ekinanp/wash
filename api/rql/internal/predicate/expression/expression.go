@@ -69,6 +69,10 @@ func (expr *expression) EvalEntrySchema(s *rql.EntrySchema) bool {
 	return expr.reducedForm.(rql.EntrySchemaPredicate).EvalEntrySchema(s)
 }
 
+func (expr *expression) ValueInDomain(v interface{}) bool {
+	return expr.reducedForm.(rql.ValuePredicate).ValueInDomain(v)
+}
+
 func (expr *expression) EvalValue(v interface{}) bool {
 	return expr.reducedForm.(rql.ValuePredicate).EvalValue(v)
 }

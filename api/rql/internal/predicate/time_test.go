@@ -115,6 +115,8 @@ func (s *TimeTestSuite) TestTimeValue_Expression_AtomAndNot() {
 	})
 
 	s.MUM(expr, []interface{}{"time", []interface{}{"<", float64(1000)}})
+	s.VIDFTC(expr, "bar")
+	s.VIDTTC(expr, s.TM(2000))
 	s.EVFTC(expr, s.TM(2000), s.TM(1000), "foo")
 	s.EVTTC(expr, s.TM(500))
 	s.AssertNotImplemented(
@@ -127,6 +129,8 @@ func (s *TimeTestSuite) TestTimeValue_Expression_AtomAndNot() {
 	)
 
 	s.MUM(expr, []interface{}{"NOT", []interface{}{"time", []interface{}{"<", float64(1000)}}})
+	s.VIDFTC(expr, "bar")
+	s.VIDTTC(expr, s.TM(2000))
 	s.EVTTC(expr, s.TM(2000), s.TM(1000))
 	s.EVFTC(expr, s.TM(500), "foo")
 }

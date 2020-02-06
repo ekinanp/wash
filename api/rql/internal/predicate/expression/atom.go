@@ -69,6 +69,11 @@ func (a *atom) EvalEntrySchema(s *rql.EntrySchema) bool {
 	return result
 }
 
+func (a *atom) ValueInDomain(v interface{}) bool {
+	vp := a.p.(rql.ValuePredicate)
+	return vp.ValueInDomain(v)
+}
+
 func (a *atom) EvalValue(v interface{}) bool {
 	vp := a.p.(rql.ValuePredicate)
 	return vp.ValueInDomain(v) && vp.EvalValue(v)

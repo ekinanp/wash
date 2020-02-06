@@ -96,6 +96,8 @@ func (s *BooleanTestSuite) TestExpression_AtomAndNot() {
 	})
 
 	s.MUM(expr, true)
+	s.VIDFTC(expr, "foo")
+	s.VIDTTC(expr, false)
 	s.EVFTC(expr, false, "foo")
 	s.EVTTC(expr, true)
 	s.EETTC(expr, rql.Entry{})
@@ -109,6 +111,8 @@ func (s *BooleanTestSuite) TestExpression_AtomAndNot() {
 	)
 
 	s.MUM(expr, []interface{}{"NOT", true})
+	s.VIDFTC(expr, "foo")
+	s.VIDTTC(expr, false)
 	s.EVTTC(expr, false)
 	s.EVFTC(expr, true, "foo")
 	s.EEFTC(expr, rql.Entry{})

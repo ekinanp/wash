@@ -124,6 +124,8 @@ func (s *NumericTestSuite) TestNumericValue_Expression_AtomAndNot() {
 	})
 
 	s.MUM(expr, []interface{}{"number", []interface{}{"<", "1"}})
+	s.VIDFTC(expr, "123456")
+	s.VIDTTC(expr, float64(10))
 	s.EVFTC(expr, float64(1), "1")
 	s.EVTTC(expr, float64(0))
 	s.AssertNotImplemented(
@@ -136,6 +138,8 @@ func (s *NumericTestSuite) TestNumericValue_Expression_AtomAndNot() {
 	)
 
 	s.MUM(expr, []interface{}{"NOT", []interface{}{"number", []interface{}{"<", "1"}}})
+	s.VIDFTC(expr, "123456")
+	s.VIDTTC(expr, float64(10))
 	s.EVTTC(expr, float64(1))
 	s.EVFTC(expr, float64(0), "1")
 }

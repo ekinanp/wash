@@ -9,6 +9,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// The ValuePredicate tests are in the object/array predicate tests
+// since that is where those methods are used
+
 type SizeTestSuite struct {
 	asttest.Suite
 }
@@ -26,18 +29,6 @@ func (s *SizeTestSuite) TestUnmarshal() {
 	s.UMETC(p, s.A("size", s.A("<", true)), "size.*PE NumericPredicate.*valid.*number", false)
 	s.UMETC(p, s.A("size", s.A("<", "-10")), "size.*PE NumericPredicate.*unsigned.*number", false)
 	s.UMTC(p, s.A("size", s.A("<", "10")), Size(UnsignedNumeric(LT, s.N("10"))))
-}
-
-func (s *SizeTestSuite) TestValueInDomain() {
-	p := Size(UnsignedNumeric(GT, s.N("0")))
-	s.VIDFTC(p, "foo", true)
-	s.VIDTTC(p, map[string]interface{}{}, []interface{}{})
-}
-
-func (s *SizeTestSuite) EvalValue() {
-	p := Size(UnsignedNumeric(GT, s.N("0")))
-	s.EVFTC(p, map[string]interface{}{}, []interface{}{})
-	s.EVTTC(p, map[string]interface{}{"foo": "bar"}, []interface{}{"foo"})
 }
 
 func (s *SizeTestSuite) TestEntryInDomain() {
@@ -65,8 +56,6 @@ func (s *SizeTestSuite) TestExpression_AtomAndNot() {
 	})
 
 	s.MUM(expr, []interface{}{"size", []interface{}{">", "0"}})
-	s.EVFTC(expr, map[string]interface{}{}, []interface{}{}, "foo")
-	s.EVTTC(expr, map[string]interface{}{"foo": "bar"}, []interface{}{"foo"})
 
 	e := rql.Entry{}
 	e.Attributes.SetSize(uint64(0))
@@ -87,8 +76,6 @@ func (s *SizeTestSuite) TestExpression_AtomAndNot() {
 
 	// Test Not
 	s.MUM(expr, []interface{}{"NOT", []interface{}{"size", []interface{}{">", "0"}}})
-	s.EVTTC(expr, map[string]interface{}{}, []interface{}{})
-	s.EVFTC(expr, map[string]interface{}{"foo": "bar"}, []interface{}{"foo"}, "foo")
 
 	e.Attributes.SetSize(uint64(0))
 	s.EETTC(expr, e)

@@ -66,6 +66,12 @@ func (n *not) EvalEntrySchema(s *rql.EntrySchema) bool {
 	return result
 }
 
+func (n *not) ValueInDomain(v interface{}) bool {
+	a := n.p.(*atom)
+	vp := a.p.(rql.ValuePredicate)
+	return vp.ValueInDomain(v)
+}
+
 func (n *not) EvalValue(v interface{}) bool {
 	a := n.p.(*atom)
 	vp := a.p.(rql.ValuePredicate)

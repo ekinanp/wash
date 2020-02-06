@@ -40,6 +40,7 @@ func (s *NullTestSuite) TestExpression_AtomAndNot() {
 	})
 
 	s.MUM(expr, nil)
+	s.VIDTTC(expr, "foo")
 	s.EVFTC(expr, "foo", 1, true)
 	s.EVTTC(expr, nil)
 	s.AssertNotImplemented(
@@ -53,6 +54,7 @@ func (s *NullTestSuite) TestExpression_AtomAndNot() {
 	)
 
 	s.MUM(expr, []interface{}{"NOT", nil})
+	s.VIDTTC(expr, "foo")
 	s.EVTTC(expr, "foo", 1, true)
 	s.EVFTC(expr, nil)
 }

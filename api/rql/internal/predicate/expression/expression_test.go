@@ -121,8 +121,8 @@ func (p *mockPtype) EvalEntrySchema(s *rql.EntrySchema) bool {
 	return s.Path() == p.v
 }
 
-func (p *mockPtype) ValueInDomain(interface{}) bool {
-	return true
+func (p *mockPtype) ValueInDomain(v interface{}) bool {
+	return v == p.v
 }
 
 func (p *mockPtype) EvalValue(v interface{}) bool {

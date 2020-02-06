@@ -20,10 +20,6 @@ func (b *base) EntrySchemaInDomain(_ *rql.EntrySchema) bool {
 	panic("Only the primaries implement EntrySchemaInDomain")
 }
 
-func (b *base) ValueInDomain(v interface{}) bool {
-	panic("Only value predicates implement ValueInDomain")
-}
-
 func (b *base) valid() bool {
 	return true
 }

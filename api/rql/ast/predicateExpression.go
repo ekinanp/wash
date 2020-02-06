@@ -7,7 +7,6 @@ import (
 	"github.com/puppetlabs/wash/api/rql/internal/predicate"
 	"github.com/puppetlabs/wash/api/rql/internal/predicate/expression"
 	"github.com/puppetlabs/wash/plugin"
-	"github.com/shopspring/decimal"
 )
 
 // PE_Primary returns a node representing a predicate expression (PE)
@@ -41,7 +40,5 @@ func PE_TimePredicate() rql.TimePredicate {
 
 // PE_UnsignedNumericPredicate returns a node representing PE UnsignedNumericPredicate
 func PE_UnsignedNumericPredicate() rql.NumericPredicate {
-	return expression.New("UnsignedNumericPredicate", func() rql.ASTNode {
-		return predicate.UnsignedNumeric("", decimal.Decimal{})
-	}).(rql.NumericPredicate)
+	return predicate.PE_UnsignedNumericPredicate()
 }

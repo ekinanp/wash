@@ -32,6 +32,12 @@ func (o *or) EvalEntrySchema(s *rql.EntrySchema) bool {
 	return esp1.EvalEntrySchema(s) || esp2.EvalEntrySchema(s)
 }
 
+func (o *or) ValueInDomain(v interface{}) bool {
+	vp1 := o.p1.(rql.ValuePredicate)
+	vp2 := o.p2.(rql.ValuePredicate)
+	return vp1.ValueInDomain(v) || vp2.ValueInDomain(v)
+}
+
 func (o *or) EvalValue(v interface{}) bool {
 	vp1 := o.p1.(rql.ValuePredicate)
 	vp2 := o.p2.(rql.ValuePredicate)

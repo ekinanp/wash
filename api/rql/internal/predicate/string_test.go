@@ -160,6 +160,8 @@ func (s *StringTestSuite) TestStringValue_AtomAndNot() {
 	})
 
 	s.MUM(expr, []interface{}{"string", []interface{}{"glob", "foo"}})
+	s.VIDFTC(expr, 1)
+	s.VIDTTC(expr, "bar")
 	s.EVFTC(expr, "bar", 1)
 	s.EVTTC(expr, "foo")
 	s.AssertNotImplemented(
@@ -172,6 +174,8 @@ func (s *StringTestSuite) TestStringValue_AtomAndNot() {
 	)
 
 	s.MUM(expr, []interface{}{"NOT", []interface{}{"string", []interface{}{"glob", "foo"}}})
+	s.VIDFTC(expr, 1)
+	s.VIDTTC(expr, "bar")
 	s.EVTTC(expr, "bar")
 	s.EVFTC(expr, "foo", 1)
 }
