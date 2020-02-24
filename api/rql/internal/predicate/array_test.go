@@ -52,8 +52,8 @@ func (s *ArrayTestSuite) TestValueInDomain_ElementPredicate() {
 	// Test "some", "all"
 	for _, selector := range []interface{}{"some", "all"} {
 		s.MUM(p, s.A("array", s.A(selector, true)))
-		s.VIDFTC(p, "foo", true, map[string]interface{}{}, []interface{}{}, []interface{}{"foo"}, []interface{}{true, "foo"})
-		s.VIDTTC(p, []interface{}{false}, []interface{}{false, false})
+		s.VIDFTC(p, "foo", true, map[string]interface{}{}, []interface{}{}, []interface{}{"foo"})
+		s.VIDTTC(p, []interface{}{true, "foo"}, []interface{}{false}, []interface{}{false, false})
 	}
 
 	// Test nth

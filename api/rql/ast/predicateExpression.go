@@ -42,3 +42,10 @@ func PE_TimePredicate() rql.TimePredicate {
 func PE_UnsignedNumericPredicate() rql.NumericPredicate {
 	return predicate.PE_UnsignedNumericPredicate()
 }
+
+// PE_Object returns a node representing PE Object
+func PE_Object() rql.ValuePredicate {
+	return expression.New("ObjectPredicate", func() rql.ASTNode {
+		return predicate.Object()
+	}).(rql.ValuePredicate)
+}

@@ -82,17 +82,17 @@ func (p *arrayElement) ValueInDomain(v interface{}) bool {
 	}
 	switch t := p.selector.(type) {
 	default:
-		if len(array) <= 0 {
-			return false
-		}
-		// Make sure every element in the array is in the value predicate's
-		// domain
+		// For the "some" and "all" selectors, we'd like to have some sort of
+		// type-checking for the array elements without being too restrictive.
+		// Since the # of elements (in general) is unknown, it is enough to
+		// require at least one array element to be in the value predicate's
+		// domain.
 		for _, v := range array {
-			if !p.p.ValueInDomain(v) {
-				return false
+			if p.p.ValueInDomain(v) {
+				return true
 			}
 		}
-		return true
+		return false
 	case int:
 		if len(array) <= t {
 			return false

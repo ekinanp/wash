@@ -20,6 +20,7 @@ func Primary() rql.ASTNode {
 		primary.Ctime(PE_TimePredicate()),
 		primary.Mtime(PE_TimePredicate()),
 		primary.Size(PE_UnsignedNumericPredicate()),
+		primary.Meta(PE_Object()),
 	)
 	nt.SetMatchErrMsg("expected a primary")
 	return nt
