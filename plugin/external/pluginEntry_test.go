@@ -1385,6 +1385,42 @@ func (suite *ExternalPluginEntryTestSuite) TestUnmarshalSchemaGraph_ValidInput()
 	}
 }
 
+func (suite *ExternalPluginEntryTestSuite) TestUnmarshalSchemaGraph_ValidInput_CorePluginEntry() {
+	entry := &pluginEntry{
+		rawTypeID: "foo",
+	}
+	entry.SetTestID("fooPlugin")
+
+	stdout := []byte(`
+{
+	"foo":{
+		"label": "fooLabel",
+		"methods": ["list"],
+		"children": [
+			"__volume::fs__"
+		]
+	},
+	"__volume::fs__": {}
+}
+`)
+	g, err := unmarshalSchemaGraph(pluginName(entry), rawTypeID(entry), stdout)
+	if suite.NoError(err) {
+		mustGet := func(key string) plugin.EntrySchema {
+			v, ok := g.Get(key)
+			if !ok {
+				suite.FailNow(fmt.Sprintf("expected %v to be present, but it wasn't", key))
+			}
+			return v.(plugin.EntrySchema)
+		}
+
+		fsTypeID := namespace("fooPlugin", plugin.RawTypeID((&volumeFS{}).template()))
+		fsSchema := mustGet(fsTypeID)
+		suite.Equal("fs", fsSchema.Label)
+		fooSchema := mustGet(namespace("fooPlugin", "foo"))
+		suite.Equal([]string{fsTypeID}, fooSchema.Children)
+	}
+}
+
 func TestExternalPluginEntry(t *testing.T) {
 	suite.Run(t, new(ExternalPluginEntryTestSuite))
 }

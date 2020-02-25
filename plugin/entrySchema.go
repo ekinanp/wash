@@ -16,7 +16,7 @@ const registrySchemaLabel = "mountpoint"
 // so plugin authors should ignore this.
 func TypeID(e Entry) string {
 	pluginName := pluginName(e)
-	rawTypeID := rawTypeID(e)
+	rawTypeID := RawTypeID(e)
 	if pluginName == "" {
 		// e is the plugin registry
 		return rawTypeID
@@ -355,7 +355,8 @@ func pluginName(e Entry) string {
 	return segments[0]
 }
 
-func rawTypeID(e Entry) string {
+// RawTypeID returns e's raw type ID. Plugin authors should ignore this.
+func RawTypeID(e Entry) string {
 	switch t := e.(type) {
 	case externalPlugin:
 		rawTypeID := t.RawTypeID()

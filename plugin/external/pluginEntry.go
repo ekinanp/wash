@@ -711,15 +711,16 @@ func unmarshalSchemaGraph(pluginName, rawTypeID string, stdout []byte) (*linkedh
 	graph := linkedhashmap.New()
 	putNode := func(rawTypeID string, rawSchema interface{}) error {
 		if coreEnt, ok := coreEntries[rawTypeID]; ok {
-			pluginSchema := coreEnt.schema()
+			template := coreEnt.template()
 
 			// Copy only the public fields so we serialize it as just data. Uses copier because it uses
 			// reflect to copy public fields, rather than Marshal/UnmarshalJSON which we've overridden.
 			var schema plugin.EntrySchema
-			err := copier.Copy(&schema, pluginSchema)
+			err := copier.Copy(&schema, template.Schema())
 			if err != nil {
 				panic(fmt.Sprintf("should always be able to copy from EntrySchema to EntrySchema: %v", err))
 			}
+			rawTypeID = plugin.RawTypeID(template)
 			populatedTypeIDs[rawTypeID] = true
 			graph.Put(namespace(pluginName, rawTypeID), schema)
 			return nil
@@ -764,6 +765,9 @@ func unmarshalSchemaGraph(pluginName, rawTypeID string, stdout []byte) (*linkedh
 			}
 			var namespacedChildren []string
 			for _, child := range node.Children {
+				if coreEnt, ok := coreEntries[child]; ok {
+					child = plugin.RawTypeID(coreEnt.template())
+				}
 				requiredTypeIDs[child] = true
 				namespacedChildren = append(namespacedChildren, namespace(pluginName, child))
 			}
