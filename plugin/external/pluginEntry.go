@@ -333,7 +333,9 @@ func (e *pluginEntry) SchemaGraph() (*linkedhashmap.Map, error) {
 		// match the methods specified in the entry instance. Return an error if there
 		// is a mismatch. Hopefully this should never happen.
 		es, _ := graph.Get(plugin.TypeID(e))
-		schemaMethods := es.(plugin.EntrySchema).Actions
+		var esSchema plugin.EntrySchema
+		esSchema.FromMap(es.(map[string]interface{}))
+		schemaMethods := esSchema.Actions
 		instanceMethods := []string{}
 		for method := range e.methods {
 			instanceMethods = append(instanceMethods, method)
@@ -721,7 +723,7 @@ func unmarshalSchemaGraph(pluginName, rawTypeID string, stdout []byte) (*linkedh
 				panic(fmt.Sprintf("should always be able to copy from EntrySchema to EntrySchema: %v", err))
 			}
 			populatedTypeIDs[rawTypeID] = true
-			graph.Put(namespace(pluginName, rawTypeID), schema)
+			graph.Put(namespace(pluginName, rawTypeID), schema.ToMap())
 			return nil
 		}
 
@@ -786,7 +788,7 @@ func unmarshalSchemaGraph(pluginName, rawTypeID string, stdout []byte) (*linkedh
 		// We don't put node itself in because doing so would marshal its "Methods"
 		// field.
 		node.Actions = node.Methods
-		graph.Put(typeID, node.EntrySchema)
+		graph.Put(typeID, node.EntrySchema.ToMap())
 		return nil
 	}
 	if err := putNode(rawTypeID, rawGraph[rawTypeID]); err != nil {

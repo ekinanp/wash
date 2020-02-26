@@ -8,6 +8,7 @@ import (
 
 	"github.com/ekinanp/jsonschema"
 	"github.com/emirpasic/gods/maps/linkedhashmap"
+	"github.com/getlantern/deepcopy"
 )
 
 const registrySchemaLabel = "mountpoint"
@@ -36,9 +37,9 @@ func schema(e Entry) (*EntrySchema, error) {
 		}
 		s := NewEntrySchema(e, "foo")
 		s.graph = graph
-		entrySchemaV, _ := s.graph.Get(TypeID(e))
 		// Nodes in the graph can only set properties on entrySchema, so only copy that.
-		s.entrySchema = entrySchemaV.(EntrySchema).entrySchema
+		entrySchemaV, _ := s.graph.Get(TypeID(e))
+		s.FromMap(entrySchemaV.(map[string]interface{}))
 		return s, nil
 	case *Registry:
 		// The plugin registry includes external plugins, whose schema call can
@@ -49,7 +50,10 @@ func schema(e Entry) (*EntrySchema, error) {
 			IsSingleton().
 			SetDescription(registryDescription)
 		schema.graph = linkedhashmap.New()
-		schema.graph.Put(TypeID(t), &schema.entrySchema)
+		typeID := TypeID(t)
+		// Put-in a stub value to preserve the ordering. We'll update the graph later
+		// once the "Children" array's been computed.
+		schema.graph.Put(TypeID(t), map[string]interface{}{})
 		for _, root := range t.pluginRoots {
 			childSchema, err := Schema(root)
 			if err != nil {
@@ -73,6 +77,8 @@ func schema(e Entry) (*EntrySchema, error) {
 				schema.graph.Put(key, value)
 			})
 		}
+		// Update the graph
+		schema.graph.Put(typeID, schema.ToMap())
 		return schema, nil
 	default:
 		// e is a core-plugin
@@ -238,6 +244,24 @@ func (s *EntrySchema) SetMetadataSchema(obj interface{}) *EntrySchema {
 	return s
 }
 
+// ToMap converts s' exported fields to a map. Plugin authors should ignore this.
+func (s *EntrySchema) ToMap() map[string]interface{} {
+	bytes, err := json.Marshal(s.entrySchema)
+	if err != nil {
+		panic(fmt.Sprintf("plugin.EntrySchema#ToMap: unexpected JSON marshal error: %v", err))
+	}
+	var mp map[string]interface{}
+	if err := json.Unmarshal(bytes, &mp); err != nil {
+		panic(fmt.Sprintf("plugin.EntrySchema#ToMap: unexpected JSON unmarshal error: %v", err))
+	}
+	return mp
+}
+
+// FromMap copies s' exported fields from mp. Plugin authors should ignore this.
+func (s *EntrySchema) FromMap(mp map[string]interface{}) error {
+	return deepcopy.Copy(s, mp)
+}
+
 func (s *EntrySchema) fill(graph *linkedhashmap.Map) {
 	// Fill-in the partial metadata + metadata schemas
 	var err error
@@ -253,12 +277,17 @@ func (s *EntrySchema) fill(graph *linkedhashmap.Map) {
 			s.fillPanicf("bad value passed into SetMetadataSchema: %v", err)
 		}
 	}
-	graph.Put(TypeID(s.entry), &s.entrySchema)
+	typeID := TypeID(s.entry)
 
-	// Fill-in the children
 	if !ListAction().IsSupportedOn(s.entry) {
+		graph.Put(typeID, s.ToMap())
 		return
 	}
+
+	// Fill-in the children. Put in a stub value for the graph to indicate that
+	// the node's been visited (and to preserve the insertion order). We'll update
+	// the graph later once the "Children" array's been computed.
+	graph.Put(typeID, map[string]interface{}{})
 	// "sParent" is read as "s.parent"
 	sParent := s.entry.(Parent)
 	children := sParent.ChildSchemas()
@@ -280,6 +309,8 @@ func (s *EntrySchema) fill(graph *linkedhashmap.Map) {
 		passAlongWrappedTypes(sParent, child.entry)
 		child.fill(graph)
 	}
+	// Update the graph
+	graph.Put(typeID, s.ToMap())
 }
 
 // This helper's used by CachedList + EntrySchema#fill(). The reason for

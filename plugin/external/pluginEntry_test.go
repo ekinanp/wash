@@ -380,7 +380,7 @@ func (suite *ExternalPluginEntryTestSuite) TestSchema_Prefetched_ReturnsTheSchem
 	graph := linkedhashmap.New()
 	graph.Put(
 		plugin.TypeID(entry),
-		schema,
+		schema.ToMap(),
 	)
 	entry.schemaGraphs[plugin.TypeID(entry)] = graph
 
@@ -410,7 +410,7 @@ func (suite *ExternalPluginEntryTestSuite) TestSchema_Prefetched_ReturnsErrorIfS
 	graph := linkedhashmap.New()
 	graph.Put(
 		plugin.TypeID(entry),
-		schema,
+		schema.ToMap(),
 	)
 	entry.schemaGraphs[plugin.TypeID(entry)] = graph
 

@@ -86,27 +86,29 @@ func (r *pluginRoot) WrappedTypes() plugin.SchemaMap {
 
 // partitionSchemaGraph partitions graph into a map of <type_id> => <schema_graph>
 func (r *pluginRoot) partitionSchemaGraph(graph *linkedhashmap.Map) map[string]*linkedhashmap.Map {
-	var populate func(*linkedhashmap.Map, string, plugin.EntrySchema, map[string]bool)
-	populate = func(g *linkedhashmap.Map, typeID string, node plugin.EntrySchema, visited map[string]bool) {
+	var populate func(*linkedhashmap.Map, string, map[string]interface{}, map[string]bool)
+	populate = func(g *linkedhashmap.Map, typeID string, node map[string]interface{}, visited map[string]bool) {
 		if visited[typeID] {
 			return
 		}
 		g.Put(typeID, node)
 		visited[typeID] = true
-		for _, childTypeID := range node.Children {
+		var nodeSchema plugin.EntrySchema
+		_ = nodeSchema.FromMap(node)
+		for _, childTypeID := range nodeSchema.Children {
 			childNode, ok := graph.Get(childTypeID)
 			if !ok {
 				msg := fmt.Sprintf("plugin.partitionSchemaGraph: expected child %v to be present in the graph", childTypeID)
 				panic(msg)
 			}
-			populate(g, childTypeID, childNode.(plugin.EntrySchema), visited)
+			populate(g, childTypeID, childNode.(map[string]interface{}), visited)
 		}
 	}
 
 	schemaGraphs := make(map[string]*linkedhashmap.Map)
 	graph.Each(func(key interface{}, value interface{}) {
 		g := linkedhashmap.New()
-		populate(g, key.(string), value.(plugin.EntrySchema), make(map[string]bool))
+		populate(g, key.(string), value.(map[string]interface{}), make(map[string]bool))
 		schemaGraphs[key.(string)] = g
 	})
 

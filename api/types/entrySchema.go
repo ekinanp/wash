@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/emirpasic/gods/maps/linkedhashmap"
-	"github.com/getlantern/deepcopy"
 	"github.com/puppetlabs/wash/plugin"
 )
 
@@ -113,7 +112,7 @@ func (s *EntrySchema) UnmarshalJSON(data []byte) error {
 			return
 		}
 		var schema plugin.EntrySchema
-		err = deepcopy.Copy(&schema, value.(map[string]interface{}))
+		err = schema.FromMap(value.(map[string]interface{}))
 		if err != nil {
 			return
 		}
